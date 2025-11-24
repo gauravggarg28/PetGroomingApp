@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import api from '../utils/api'
 import GoogleMapPicker from '../components/GoogleMapPicker'
 import { dogBreeds, catBreeds } from '../utils/breeds'
 
@@ -82,7 +82,7 @@ function Register() {
     }
 
     try {
-      const response = await axios.post('/api/customers', formData)
+      const response = await api.post('/api/customers', formData)
       // Store customer ID in localStorage for future bookings
       localStorage.setItem('customerId', response.data.id)
       localStorage.setItem('customerPhone', response.data.phone)

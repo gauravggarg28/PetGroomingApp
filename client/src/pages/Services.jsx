@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import axios from 'axios'
+import api from '../utils/api'
 
 function Services() {
   const [services, setServices] = useState([])
@@ -12,7 +12,7 @@ function Services() {
 
   const fetchServices = async () => {
     try {
-      const response = await axios.get('/api/services')
+      const response = await api.get('/api/services')
       setServices(response.data)
       setLoading(false)
     } catch (error) {

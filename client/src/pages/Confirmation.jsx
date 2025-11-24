@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import axios from 'axios'
+import api from '../utils/api'
 
 function Confirmation() {
   const { bookingId } = useParams()
@@ -13,7 +13,7 @@ function Confirmation() {
 
   const fetchBooking = async () => {
     try {
-      const response = await axios.get(`/api/bookings/${bookingId}`)
+      const response = await api.get(`/api/bookings/${bookingId}`)
       setBooking(response.data)
       setLoading(false)
     } catch (error) {

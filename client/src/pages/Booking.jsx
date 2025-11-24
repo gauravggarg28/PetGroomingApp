@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import api from '../utils/api'
 import { dogBreeds, catBreeds } from '../utils/breeds'
 import BookingProgress from '../components/BookingProgress'
 
@@ -30,7 +30,7 @@ function Booking() {
 
   const fetchService = async () => {
     try {
-      const response = await axios.get(`/api/services/${serviceId}`)
+      const response = await api.get(`/api/services/${serviceId}`)
       setService(response.data)
       setLoading(false)
     } catch (error) {
@@ -45,7 +45,7 @@ function Booking() {
     
     if (customerId) {
       try {
-        const response = await axios.get(`/api/customers/${customerId}`)
+        const response = await api.get(`/api/customers/${customerId}`)
         setCustomer(response.data)
         if (response.data.pets.length > 0) {
           setSelectedPetId(response.data.pets[0].id.toString())
@@ -56,7 +56,7 @@ function Booking() {
       }
     } else if (customerPhone) {
       try {
-        const response = await axios.get(`/api/customers/phone/${customerPhone}`)
+        const response = await api.get(`/api/customers/phone/${customerPhone}`)
         setCustomer(response.data)
         localStorage.setItem('customerId', response.data.id)
         if (response.data.pets.length > 0) {
@@ -112,7 +112,7 @@ function Booking() {
             gender: formData.gender
           }]
         }
-        await axios.post('/api/customers', updatedCustomer)
+        await api.post('/api/customers', updatedCustomer)
         petId = updatedCustomer.pets[updatedCustomer.pets.length - 1].id
         petData = updatedCustomer.pets[updatedCustomer.pets.length - 1]
       } catch (error) {
@@ -130,7 +130,7 @@ function Booking() {
     }
 
     try {
-      const response = await axios.post('/api/bookings', {
+      const response = await api.post('/api/bookings', {
         customerId: customer.id,
         petId: petId,
         serviceId: parseInt(serviceId),
