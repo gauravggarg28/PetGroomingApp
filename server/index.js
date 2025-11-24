@@ -29,42 +29,50 @@ try {
 }
 
 // Initialize data files if they don't exist
-if (!fs.existsSync(SERVICES_FILE)) {
-  const defaultServices = [
-    {
-      id: 1,
-      name: "Basic",
-      description: "Essential grooming including bath, brush, nail trim, and ear cleaning",
-      duration: 60,
-      price: 500,
-      image: "🐕"
-    },
-    {
-      id: 2,
-      name: "Bath & Hygiene",
-      description: "Comprehensive bath with deep cleaning, nail trimming, ear cleaning, and dental care",
-      duration: 75,
-      price: 800,
-      image: "🛁"
-    },
-    {
-      id: 3,
-      name: "Full Grooming",
-      description: "Complete grooming package including haircut, styling, bath, nail trim, ear cleaning, and spa treatment",
-      duration: 120,
-      price: 1200,
-      image: "✨"
-    }
-  ];
-  fs.writeFileSync(SERVICES_FILE, JSON.stringify(defaultServices, null, 2));
-}
+try {
+  if (!fs.existsSync(SERVICES_FILE)) {
+    const defaultServices = [
+      {
+        id: 1,
+        name: "Basic",
+        description: "Essential grooming including bath, brush, nail trim, and ear cleaning",
+        duration: 60,
+        price: 500,
+        image: "🐕"
+      },
+      {
+        id: 2,
+        name: "Bath & Hygiene",
+        description: "Comprehensive bath with deep cleaning, nail trimming, ear cleaning, and dental care",
+        duration: 75,
+        price: 800,
+        image: "🛁"
+      },
+      {
+        id: 3,
+        name: "Full Grooming",
+        description: "Complete grooming package including haircut, styling, bath, nail trim, ear cleaning, and spa treatment",
+        duration: 120,
+        price: 1200,
+        image: "✨"
+      }
+    ];
+    fs.writeFileSync(SERVICES_FILE, JSON.stringify(defaultServices, null, 2));
+    console.log('Initialized services.json');
+  }
 
-if (!fs.existsSync(BOOKINGS_FILE)) {
-  fs.writeFileSync(BOOKINGS_FILE, JSON.stringify([], null, 2));
-}
+  if (!fs.existsSync(BOOKINGS_FILE)) {
+    fs.writeFileSync(BOOKINGS_FILE, JSON.stringify([], null, 2));
+    console.log('Initialized bookings.json');
+  }
 
-if (!fs.existsSync(CUSTOMERS_FILE)) {
-  fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify([], null, 2));
+  if (!fs.existsSync(CUSTOMERS_FILE)) {
+    fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify([], null, 2));
+    console.log('Initialized customers.json');
+  }
+} catch (error) {
+  console.error('Warning: Could not initialize data files:', error.message);
+  // Don't exit - server can still run, data will be created on first write
 }
 
 // Helper functions
@@ -87,7 +95,12 @@ const readBookings = () => {
 };
 
 const writeBookings = (bookings) => {
-  fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
+  try {
+    fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
+  } catch (error) {
+    console.error('Error writing bookings:', error);
+    throw error;
+  }
 };
 
 const readCustomers = () => {
@@ -100,7 +113,12 @@ const readCustomers = () => {
 };
 
 const writeCustomers = (customers) => {
-  fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify(customers, null, 2));
+  try {
+    fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify(customers, null, 2));
+  } catch (error) {
+    console.error('Error writing customers:', error);
+    throw error;
+  }
 };
 
 // Routes
@@ -289,8 +307,30 @@ app.use((err, req, res, next) => {
 });
 
 // Start server - bind to 0.0.0.0 for Render
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server is running on port ${PORT}`);
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Server is running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Health check: http://0.0.0.0:${PORT}/health`);
+});
+
+// Handle server errors gracefully
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} is already in use`);
+  } else {
+    console.error('Server error:', error);
+  }
+  process.exit(1);
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  // Don't exit - let the server try to continue
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit - let the server try to continue
 });
 
