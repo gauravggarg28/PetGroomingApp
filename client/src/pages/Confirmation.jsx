@@ -112,8 +112,8 @@ function Confirmation() {
               <span className="font-semibold text-sm sm:text-base">{formatDate(booking.date)}</span>
             </div>
             <div className="flex justify-between items-start sm:items-center flex-col sm:flex-row gap-1 sm:gap-0">
-              <span className="text-sm sm:text-base text-gray-600">Time:</span>
-              <span className="font-semibold text-sm sm:text-base">{formatTime(booking.time)}</span>
+              <span className="text-sm sm:text-base text-gray-600">Time Slot:</span>
+              <span className="font-semibold text-sm sm:text-base">{booking.timeSlot || formatTime(booking.time)}</span>
             </div>
             <div className="pt-3 border-t border-gray-200">
               <span className="text-sm sm:text-base text-gray-600 block mb-1 sm:mb-2">Address:</span>

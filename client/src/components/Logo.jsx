@@ -2,7 +2,7 @@ function Logo({ className = "" }) {
   return (
     <div className={`flex items-center ${className}`}>
       <img 
-        src="/images/logo.png" 
+        src="/images/Bhaobhao.jpg" 
         alt="BhaoBhao Logo" 
         className="h-10 sm:h-12 md:h-14 w-auto object-contain"
         onError={(e) => {

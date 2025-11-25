@@ -9,7 +9,7 @@ function Home() {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: 'url(/images/banner-grooming.jpg)',
+            backgroundImage: 'url(/images/Bhaobhao1.jpg)',
             backgroundSize: 'cover',
             backgroundPosition: 'center'
           }}

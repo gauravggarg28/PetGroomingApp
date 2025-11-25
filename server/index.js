@@ -17,6 +17,7 @@ const DATA_DIR = path.join(__dirname, 'data');
 const SERVICES_FILE = path.join(DATA_DIR, 'services.json');
 const BOOKINGS_FILE = path.join(DATA_DIR, 'bookings.json');
 const CUSTOMERS_FILE = path.join(DATA_DIR, 'customers.json');
+const GROOMERS_FILE = path.join(DATA_DIR, 'groomers.json');
 
 // Ensure data directory exists
 try {
@@ -29,50 +30,46 @@ try {
 }
 
 // Initialize data files if they don't exist
-try {
-  if (!fs.existsSync(SERVICES_FILE)) {
-    const defaultServices = [
-      {
-        id: 1,
-        name: "Basic",
-        description: "Essential grooming including bath, brush, nail trim, and ear cleaning",
-        duration: 60,
-        price: 500,
-        image: "🐕"
-      },
-      {
-        id: 2,
-        name: "Bath & Hygiene",
-        description: "Comprehensive bath with deep cleaning, nail trimming, ear cleaning, and dental care",
-        duration: 75,
-        price: 800,
-        image: "🛁"
-      },
-      {
-        id: 3,
-        name: "Full Grooming",
-        description: "Complete grooming package including haircut, styling, bath, nail trim, ear cleaning, and spa treatment",
-        duration: 120,
-        price: 1200,
-        image: "✨"
-      }
-    ];
-    fs.writeFileSync(SERVICES_FILE, JSON.stringify(defaultServices, null, 2));
-    console.log('Initialized services.json');
-  }
+if (!fs.existsSync(SERVICES_FILE)) {
+  const defaultServices = [
+    {
+      id: 1,
+      name: "Basic",
+      description: "Essential grooming including bath, brush, nail trim, and ear cleaning",
+      duration: 60,
+      price: 500,
+      image: "🐕"
+    },
+    {
+      id: 2,
+      name: "Bath & Hygiene",
+      description: "Comprehensive bath with deep cleaning, nail trimming, ear cleaning, and dental care",
+      duration: 75,
+      price: 800,
+      image: "🛁"
+    },
+    {
+      id: 3,
+      name: "Full Grooming",
+      description: "Complete grooming package including haircut, styling, bath, nail trim, ear cleaning, and spa treatment",
+      duration: 120,
+      price: 1200,
+      image: "✨"
+    }
+  ];
+  fs.writeFileSync(SERVICES_FILE, JSON.stringify(defaultServices, null, 2));
+}
 
-  if (!fs.existsSync(BOOKINGS_FILE)) {
-    fs.writeFileSync(BOOKINGS_FILE, JSON.stringify([], null, 2));
-    console.log('Initialized bookings.json');
-  }
+if (!fs.existsSync(BOOKINGS_FILE)) {
+  fs.writeFileSync(BOOKINGS_FILE, JSON.stringify([], null, 2));
+}
 
-  if (!fs.existsSync(CUSTOMERS_FILE)) {
-    fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify([], null, 2));
-    console.log('Initialized customers.json');
-  }
-} catch (error) {
-  console.error('Warning: Could not initialize data files:', error.message);
-  // Don't exit - server can still run, data will be created on first write
+if (!fs.existsSync(CUSTOMERS_FILE)) {
+  fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify([], null, 2));
+}
+
+if (!fs.existsSync(GROOMERS_FILE)) {
+  fs.writeFileSync(GROOMERS_FILE, JSON.stringify([], null, 2));
 }
 
 // Helper functions
@@ -95,12 +92,7 @@ const readBookings = () => {
 };
 
 const writeBookings = (bookings) => {
-  try {
-    fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
-  } catch (error) {
-    console.error('Error writing bookings:', error);
-    throw error;
-  }
+  fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
 };
 
 const readCustomers = () => {
@@ -113,12 +105,20 @@ const readCustomers = () => {
 };
 
 const writeCustomers = (customers) => {
+  fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify(customers, null, 2));
+};
+
+const readGroomers = () => {
   try {
-    fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify(customers, null, 2));
+    const data = fs.readFileSync(GROOMERS_FILE, 'utf8');
+    return JSON.parse(data);
   } catch (error) {
-    console.error('Error writing customers:', error);
-    throw error;
+    return [];
   }
+};
+
+const writeGroomers = (groomers) => {
+  fs.writeFileSync(GROOMERS_FILE, JSON.stringify(groomers, null, 2));
 };
 
 // Routes
@@ -228,10 +228,10 @@ app.get('/api/customers/:id', (req, res) => {
 
 // Create a new booking
 app.post('/api/bookings', (req, res) => {
-  const { customerId, petId, serviceId, date, time } = req.body;
+  const { customerId, petId, serviceId, date, timeSlot } = req.body;
 
   // Validation
-  if (!customerId || !petId || !serviceId || !date || !time) {
+  if (!customerId || !petId || !serviceId || !date || !timeSlot) {
     return res.status(400).json({ error: 'All fields are required' });
   }
 
@@ -268,8 +268,11 @@ app.post('/api/bookings', (req, res) => {
     serviceId: parseInt(serviceId),
     serviceName: service.name,
     date,
-    time,
-    status: 'confirmed',
+    timeSlot,
+    time: timeSlot, // Keep for backward compatibility
+    status: 'pending',
+    groomerId: null,
+    groomerName: null,
     createdAt: new Date().toISOString()
   };
 
@@ -290,6 +293,98 @@ app.get('/api/bookings/:id', (req, res) => {
   }
 });
 
+// Groomer Management Routes
+
+// Get all groomers
+app.get('/api/groomers', (req, res) => {
+  const groomers = readGroomers();
+  res.json(groomers);
+});
+
+// Create new groomer
+app.post('/api/groomers', (req, res) => {
+  const { name, age, sex, address, idProof, photo, workingDays, timeSlots, paymentType, salary, commission } = req.body;
+
+  if (!name || !age || !sex || !address || !idProof || !workingDays || !timeSlots || !paymentType) {
+    return res.status(400).json({ error: 'All required fields must be provided' });
+  }
+
+  if (paymentType === 'salary' && !salary) {
+    return res.status(400).json({ error: 'Salary is required for salary-based payment' });
+  }
+
+  if (paymentType === 'variable' && !commission) {
+    return res.status(400).json({ error: 'Commission is required for variable payment' });
+  }
+
+  const groomers = readGroomers();
+  const newGroomer = {
+    id: groomers.length > 0 ? Math.max(...groomers.map(g => g.id)) + 1 : 1,
+    name,
+    age: parseInt(age),
+    sex,
+    address,
+    idProof,
+    photo: photo || '',
+    workingDays,
+    timeSlots,
+    paymentType,
+    salary: paymentType === 'salary' ? parseFloat(salary) : null,
+    commission: paymentType === 'variable' ? parseFloat(commission) : null,
+    createdAt: new Date().toISOString()
+  };
+
+  groomers.push(newGroomer);
+  writeGroomers(groomers);
+
+  res.status(201).json(newGroomer);
+});
+
+// Assign groomer to booking
+app.post('/api/bookings/:id/assign-groomer', (req, res) => {
+  const { groomerId } = req.body;
+  const bookingId = parseInt(req.params.id);
+
+  if (!groomerId) {
+    return res.status(400).json({ error: 'Groomer ID is required' });
+  }
+
+  const bookings = readBookings();
+  const booking = bookings.find(b => b.id === bookingId);
+  if (!booking) {
+    return res.status(404).json({ error: 'Booking not found' });
+  }
+
+  const groomers = readGroomers();
+  const groomer = groomers.find(g => g.id === parseInt(groomerId));
+  if (!groomer) {
+    return res.status(404).json({ error: 'Groomer not found' });
+  }
+
+  booking.groomerId = parseInt(groomerId);
+  booking.groomerName = groomer.name;
+  booking.status = 'confirmed';
+  booking.assignedAt = new Date().toISOString();
+
+  writeBookings(bookings);
+
+  // Send notifications (simulated - in production, use actual WhatsApp/Email APIs)
+  console.log('Sending notifications...');
+  console.log(`WhatsApp to Groomer (${groomer.name}): Booking assigned - ${booking.customerName}, ${booking.petName}, ${booking.date} ${booking.timeSlot}`);
+  console.log(`Email to Groomer: Booking details sent`);
+  console.log(`WhatsApp to Customer (${booking.customerName}): Groomer ${groomer.name} assigned for ${booking.date} ${booking.timeSlot}`);
+  console.log(`Email to Customer: Groomer details sent`);
+
+  res.json({ 
+    message: 'Groomer assigned successfully', 
+    booking,
+    notifications: {
+      groomer: { whatsapp: 'sent', email: 'sent' },
+      customer: { whatsapp: 'sent', email: 'sent' }
+    }
+  });
+});
+
 // Health check endpoint for Render
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Server is running' });
@@ -307,30 +402,8 @@ app.use((err, req, res, next) => {
 });
 
 // Start server - bind to 0.0.0.0 for Render
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Server is running on port ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server is running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`Health check: http://0.0.0.0:${PORT}/health`);
-});
-
-// Handle server errors gracefully
-server.on('error', (error) => {
-  if (error.code === 'EADDRINUSE') {
-    console.error(`Port ${PORT} is already in use`);
-  } else {
-    console.error('Server error:', error);
-  }
-  process.exit(1);
-});
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
-  // Don't exit - let the server try to continue
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  // Don't exit - let the server try to continue
 });
 

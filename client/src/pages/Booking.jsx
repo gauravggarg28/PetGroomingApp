@@ -16,12 +16,19 @@ function Booking() {
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
     date: '',
-    time: '',
+    timeSlot: '',
     petType: '',
     breed: '',
     petName: '',
     gender: ''
   })
+  const [availableTimeSlots] = useState([
+    '8:00 - 10:00',
+    '10:00 - 12:00',
+    '12:00 - 14:00',
+    '14:00 - 16:00',
+    '16:00 - 18:00'
+  ])
 
   useEffect(() => {
     fetchService()
@@ -123,8 +130,8 @@ function Booking() {
       }
     }
 
-    if (!formData.date || !formData.time) {
-      alert('Please select date and time')
+    if (!formData.date || !formData.timeSlot) {
+      alert('Please select date and time slot')
       setSubmitting(false)
       return
     }
@@ -135,7 +142,7 @@ function Booking() {
         petId: petId,
         serviceId: parseInt(serviceId),
         date: formData.date,
-        time: formData.time
+        timeSlot: formData.timeSlot
       })
       navigate(`/confirmation/${response.data.id}`)
     } catch (error) {
@@ -356,14 +363,13 @@ function Booking() {
             </div>
 
             <div>
-              <label htmlFor="time" className="block text-sm font-medium text-gray-700 mb-1">
-                Preferred Time *
+              <label htmlFor="timeSlot" className="block text-sm font-medium text-gray-700 mb-1">
+                Preferred Time Slot (2 hours) *
               </label>
-              <input
-                type="time"
-                id="time"
-                name="time"
-                value={formData.time}
+              <select
+                id="timeSlot"
+                name="timeSlot"
+                value={formData.timeSlot}
                 onChange={(e) => {
                   handleChange(e)
                   if (e.target.value && formData.date) setCurrentStep(3)
@@ -371,7 +377,12 @@ function Booking() {
                 }}
                 required
                 className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-gold focus:border-transparent text-sm sm:text-base"
-              />
+              >
+                <option value="">Select time slot</option>
+                {availableTimeSlots.map(slot => (
+                  <option key={slot} value={slot}>{slot}</option>
+                ))}
+              </select>
             </div>
           </div>
 
