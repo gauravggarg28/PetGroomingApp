@@ -23,10 +23,11 @@ const GROOMERS_FILE = path.join(DATA_DIR, 'groomers.json');
 try {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
+    console.log('Data directory created:', DATA_DIR);
   }
 } catch (error) {
   console.error('Error creating data directory:', error);
-  process.exit(1);
+  // Don't exit - try to continue
 }
 
 // Initialize data files if they don't exist
